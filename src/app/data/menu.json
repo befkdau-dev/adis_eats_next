@@ -1,0 +1,174 @@
+{
+  "menu": [
+    {
+      "id": 1,
+      "name": "Doro Wat",
+      "description": "A spicy Ethiopian chicken stew made with berbere and served with injera.",
+      "price": 350,
+      "category": "Main Course",
+      "ingredients": [
+        "Chicken",
+        "Berbere",
+        "Onion",
+        "Garlic",
+        "Ginger",
+        "Butter",
+        "Egg",
+        "Cardamom"
+      ],
+      "image": "images/doro-wat.jpg",
+      "isAvailable": true
+    },
+    {
+      "id": 2,
+      "name": "Kitfo",
+      "description": "Minced beef seasoned with mitmita and Ethiopian butter.",
+      "price": 450,
+      "category": "Main Course",
+      "ingredients": [
+        "Minced Beef",
+        "Mitmita",
+        "Ethiopian Butter",
+        "Cardamom",
+        "Salt"
+      ],
+      "image": "images/kitfo.jpg",
+      "isAvailable": true
+    },
+    {
+      "id": 3,
+      "name": "Shiro Wat",
+      "description": "A smooth and spicy chickpea stew commonly served with injera.",
+      "price": 250,
+      "category": "Vegetarian",
+      "ingredients": [
+        "Shiro Powder",
+        "Onion",
+        "Garlic",
+        "Berbere",
+        "Tomato",
+        "Oil",
+        "Salt"
+      ],
+      "image": "images/shiro-wat.jpg",
+      "isAvailable": true
+    },
+    {
+      "id": 4,
+      "name": "Tibs",
+      "description": "Sautéed pieces of beef cooked with onions, peppers, and Ethiopian spices.",
+      "price": 400,
+      "category": "Main Course",
+      "ingredients": [
+        "Beef",
+        "Onion",
+        "Green Pepper",
+        "Tomato",
+        "Rosemary",
+        "Garlic",
+        "Oil",
+        "Salt"
+      ],
+      "image": "images/tibs.jpg",
+      "isAvailable": true
+    },
+    {
+      "id": 5,
+      "name": "Beyaynetu",
+      "description": "A colorful combination of vegetarian Ethiopian dishes served with injera.",
+      "price": 300,
+      "category": "Vegetarian",
+      "ingredients": [
+        "Shiro",
+        "Misir Wat",
+        "Gomen",
+        "Tikil Gomen",
+        "Azifa",
+        "Injera"
+      ],
+      "image": "images/beyaynetu.jpg",
+      "isAvailable": true
+    },
+    {
+      "id": 6,
+      "name": "Misir Wat",
+      "description": "Spicy red lentil stew prepared with berbere and traditional spices.",
+      "price": 220,
+      "category": "Vegetarian",
+      "ingredients": [
+        "Red Lentils",
+        "Berbere",
+        "Onion",
+        "Garlic",
+        "Ginger",
+        "Oil",
+        "Salt"
+      ],
+      "image": "images/misir-wat.jpg",
+      "isAvailable": true
+    },
+    {
+      "id": 7,
+      "name": "Gored Gored",
+      "description": "Cubed raw beef seasoned with Ethiopian spices and clarified butter.",
+      "price": 500,
+      "category": "Main Course",
+      "ingredients": ["Beef", "Mitmita", "Ethiopian Butter", "Awaze", "Salt"],
+      "image": "images/gored-gored.jpg",
+      "isAvailable": true
+    },
+    {
+      "id": 8,
+      "name": "Fasting Firfir",
+      "description": "Pieces of injera mixed with spicy berbere sauce and vegetables.",
+      "price": 200,
+      "category": "Breakfast",
+      "ingredients": [
+        "Injera",
+        "Berbere",
+        "Onion",
+        "Tomato",
+        "Garlic",
+        "Oil",
+        "Salt"
+      ],
+      "image": "images/fasting-firfir.jpg",
+      "isAvailable": true
+    },
+    {
+      "id": 9,
+      "name": "Chechebsa",
+      "description": "Shredded flatbread mixed with spiced butter and served as a traditional breakfast.",
+      "price": 180,
+      "category": "Breakfast",
+      "ingredients": [
+        "Flatbread",
+        "Ethiopian Butter",
+        "Berbere",
+        "Honey",
+        "Salt"
+      ],
+      "image": "images/chechebsa.jpg",
+      "isAvailable": true
+    },
+    {
+      "id": 10,
+      "name": "Vegetable Couscous",
+      "description": "Steamed couscous served with a mixture of fresh Ethiopian-style vegetables.",
+      "price": 280,
+      "category": "Vegetarian",
+      "ingredients": [
+        "Couscous",
+        "Carrot",
+        "Green Pepper",
+        "Onion",
+        "Tomato",
+        "Potato",
+        "Garlic",
+        "Oil"
+      ],
+      "image": "images/vegetable-couscous.jpg",
+      "isAvailable": false
+    }
+  ]
+}
