@@ -6,18 +6,43 @@ import Image from "next/image";
 export async function generateMetadata({ params }) {
   const { id } = await params;
   const dish = await getDish(id);
+
   if (!dish) {
-    return { title: "dish not found" };
+    return { title: "Dish Not Found" };
   }
 
+  const title = `${dish.name} | Adis Eats`;
+  const description = `${dish.name} - ${dish.price} ETB. ${dish.description}`;
+
+  const siteUrl = (
+    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+  ).replace(/\/$/, "");
+
+  const imageUrl = `${siteUrl}/menu/${id}/opengraph-image`;
+
   return {
-    title: dish.name,
-    description: `${dish.name}- ${dish.price} ETB - ${dish.description}`,
+    title,
+    description,
     openGraph: {
-      title: `${dish.name} | Adis Eats`,
+      title,
       description,
-      type: "website",
+      url: `${siteUrl}/menu/${id}`,
       siteName: "Adis Eats",
+      type: "website",
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${dish.name} - Adis Eats`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imageUrl],
     },
   };
 }
