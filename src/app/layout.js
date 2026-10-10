@@ -6,7 +6,7 @@ import "./globals.css";
 import { getSession } from "./lib/session";
 
 export const metadata = {
-  metadataBase: new URL("https://adis-eats-next.vercel.app/npm"),
+  metadataBase: new URL("https://adis-eats-next.vercel.app"),
   title: {
     default: "Adis Eats",
     template: "%s | Adis Eats",
