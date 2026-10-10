@@ -1,7 +1,7 @@
 // app/sitemap.js
 import { getMenu } from "./lib/dishes";
 
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = "https://adis-eats-next.vercel.app/";
 
 export default async function sitemap() {
   const dishes = await getMenu();

@@ -13,6 +13,12 @@ export async function generateMetadata({ params }) {
   return {
     title: dish.name,
     description: `${dish.name}- ${dish.price} ETB - ${dish.description}`,
+    openGraph: {
+      title: `${dish.name} | Adis Eats`,
+      description,
+      type: "website",
+      siteName: "Adis Eats",
+    },
   };
 }
 export async function generateStaticParams() {
