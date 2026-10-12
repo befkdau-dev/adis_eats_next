@@ -47,7 +47,7 @@ export default function CheckoutForm() {
 
   // Key change: once an order has been placed, don't show "empty cart"
   // even though clearCart() makes items.length briefly become 0.
-  if (items.length === 0 && !orderPlaced.current) {
+  if (items.length === 0) {
     return (
       <div className="text-center py-12">
         <h1 className="text-2xl font-bold mb-2">Your cart is empty</h1>
