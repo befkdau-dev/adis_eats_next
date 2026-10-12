@@ -17,7 +17,11 @@ export const metadata = {
 export default async function RootLayout({ children }) {
   const session = await getSession();
   const initialUser = session
-    ? { id: session.userId, name: session.name }
+    ? {
+        id: session.payload.userId,
+        name: session.payload.name,
+        role: session.role,
+      }
     : null;
 
   return (

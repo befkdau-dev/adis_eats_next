@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/app/context/CartContext";
 import { useAuth } from "@/app/context/AuthContext";
@@ -14,7 +14,7 @@ const inputClass =
 
 export default function CheckoutForm() {
   const { items, totalPrice, clearCart, isLoaded: cartLoaded } = useCart();
-  const { user, isLoaded: authLoaded, openLogin } = useAuth();
+  const { user, isLoaded: authLoaded } = useAuth();
   const { addOrderId } = useOrders();
   const router = useRouter();
   const orderPlaced = useRef(false);
@@ -29,39 +29,25 @@ export default function CheckoutForm() {
   const [serverError, setServerError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Guards: not logged in -> open login modal; empty cart -> back to /cart
-  useEffect(() => {
-    if (!authLoaded || !cartLoaded) return;
-
-    // if (!user) {
-    //   openLogin();
-    // } else
-    // if (items.length === 0 && !orderPlaced.current && user) {
-    //   router.replace("/cart");
-    // }
-  }, [authLoaded, cartLoaded, user, items.length, router, openLogin]);
-
-  // if (!authLoaded || !cartLoaded) {
-  //   return <p className="text-gray-500">Loading your order...</p>;
-  // }
-
   if (!user) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-600 mb-4">
           Please log in to continue to checkout.
         </p>
-        <button
-          onClick={openLogin}
-          className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700"
+        <Link
+          href="/login?next=/checkout"
+          className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 inline-block"
         >
           Log in
-        </button>
+        </Link>
       </div>
     );
   }
 
-  if (items.length === 0) {
+  // Key change: once an order has been placed, don't show "empty cart"
+  // even though clearCart() makes items.length briefly become 0.
+  if (items.length === 0 && !orderPlaced.current) {
     return (
       <div className="text-center py-12">
         <h1 className="text-2xl font-bold mb-2">Your cart is empty</h1>
@@ -83,30 +69,28 @@ export default function CheckoutForm() {
     e.preventDefault();
     setServerError("");
 
-    // Client-side validation (fast feedback)
     const { errors: clientErrors, values } = validateCustomer(form);
     setErrors(clientErrors);
     if (Object.keys(clientErrors).length > 0) return;
 
     setSubmitting(true);
     try {
-      // Server action: re-validates everything and returns the finished order
       const result = await placeOrder({
         customer: values,
         items: items.map((i) => ({ id: i.id, quantity: i.quantity })),
       });
 
-      // if theier are error in the saving the orders
       if (result.errors) {
         setErrors(result.errors);
         setServerError(result.errors.items ?? "Please fix the errors above");
         return;
       }
 
+      // Order succeeded: flip the ref FIRST, then navigate, then clear.
       orderPlaced.current = true;
       addOrderId(result.order.id);
-      clearCart();
       router.push(`/checkout/success?orderId=${result.order.id}`);
+      clearCart();
     } catch {
       setServerError("Something went wrong. Please try again.");
     } finally {

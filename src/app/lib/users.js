@@ -1,44 +1,50 @@
-import { promises as fs, readFile } from "fs";
-import path from "path";
+// app/lib/users.js
 import bcrypt from "bcryptjs";
 
-const USERS_FILE = path.join(process.cwd(), "src", "app", "data", "users.json");
+// In-memory store — resets whenever the server restarts / on each
+// serverless cold start. Good enough for demoing without a database.
+let users = [
+  {
+    id: "11111111-1111-1111-1111-111111111111",
+    name: "Befkadu Teshome",
+    email: "customer@example.com",
+    passwordHash: bcrypt.hashSync("password123", 10),
+    role: "customer",
+  },
+  {
+    id: "22222222-2222-2222-2222-222222222222",
+    name: "Admin Staff",
+    email: "kitchen@email.com",
+    passwordHash: bcrypt.hashSync("kitchen1234", 10),
+    role: "staff",
+  },
+];
 
-export async function readUsers() {
-  try {
-    const users = JSON.parse(await fs.readFile(USERS_FILE, "utf8"));
-    return users;
-  } catch {
-    return [];
-  }
-}
-
-export async function writeUsers(users) {
-  await fs.writeFile(USERS_FILE, JSON.stringify(users, null, 2));
-}
-
-export async function createUsers(name, email, password) {
-  const users = await readUsers();
+export async function createUsers({
+  name,
+  email,
+  password,
+  role = "customer",
+}) {
   const normalized = email.trim().toLowerCase();
-  if (users.some((usr) => usr.email === normalized)) {
-    return null;
-  }
+  if (users.some((u) => u.email === normalized)) return null;
 
   const user = {
     id: crypto.randomUUID(),
     name: name.trim(),
     email: normalized,
     passwordHash: await bcrypt.hash(password, 10),
+    role,
   };
 
   users.push(user);
-  await writeUsers(users);
   return user;
 }
+
 export async function verifyUser({ email, password }) {
-  const users = await readUsers();
-  const user = users.find((usr) => usr.email === email.trim().toLowerCase());
+  const user = users.find((u) => u.email === email.trim().toLowerCase());
   if (!user) return null;
+
   const matches = await bcrypt.compare(password, user.passwordHash);
   return matches ? user : null;
 }

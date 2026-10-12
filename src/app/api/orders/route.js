@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { buildOrder } from "@/app/lib/orders";
 import { getSession } from "@/app/lib/session";
 import { promises as fs } from "fs";
+import { getOrdersByUser } from "@/app/lib/orderStore";
 import path from "path";
 
 export const dynamic = "force-dynamic";
@@ -32,16 +33,26 @@ export async function POST(request) {
   return NextResponse.json({ order: result.order }, { status: 201 });
 }
 
+// export async function GET() {
+//   const session = await getSession();
+//   const userId = session.payload.userId;
+//   if (!session)
+//     return NextResponse.json({ error: "unahutorized" }, { status: 401 });
+//   let orders;
+//   try {
+//     orders = JSON.parse(await fs.readFile(ORDERS_FILE, "utf8"));
+//   } catch {}
+//   const userOrders = orders.filter((order) => order.usrId === userId);
+
+//   return NextResponse.json({ orders: userOrders });
+// }
+
 export async function GET() {
   const session = await getSession();
-  const userId = session.payload.userId;
-  if (!session)
-    return NextResponse.json({ error: "unahutorized" }, { status: 401 });
-  let orders;
-  try {
-    orders = JSON.parse(await fs.readFile(ORDERS_FILE, "utf8"));
-  } catch {}
-  const userOrders = orders.filter((order) => order.usrId === userId);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
+  const userOrders = await getOrdersByUser(session.payload.userId);
   return NextResponse.json({ orders: userOrders });
 }

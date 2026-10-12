@@ -15,7 +15,7 @@ const customerLinks = [
   { href: "/orders", label: "Orders" },
 ];
 
-const staffLinks = [{ href: "/kitchen", label: "Kitchen" }];
+const staffLinks = [{ href: "/dashboard", label: "Admin" }];
 
 export default function NavLinks() {
   const pathname = usePathname();
