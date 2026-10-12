@@ -2,6 +2,7 @@
   "menu": [
     {
       "id": 1,
+      "slug": "doro-wat",
       "name": "Doro Wat",
       "description": "A spicy Ethiopian chicken stew made with berbere and served with injera.",
       "price": 350,
@@ -21,6 +22,7 @@
     },
     {
       "id": 2,
+      "slug": "kitfo",
       "name": "Kitfo",
       "description": "Minced beef seasoned with mitmita and Ethiopian butter.",
       "price": 450,
@@ -37,6 +39,7 @@
     },
     {
       "id": 3,
+      "slug": "shiro-wat",
       "name": "Shiro Wat",
       "description": "A smooth and spicy chickpea stew commonly served with injera.",
       "price": 250,
@@ -55,6 +58,7 @@
     },
     {
       "id": 4,
+      "slug": "tibs",
       "name": "Tibs",
       "description": "Sautéed pieces of beef cooked with onions, peppers, and Ethiopian spices.",
       "price": 400,
@@ -74,6 +78,7 @@
     },
     {
       "id": 5,
+      "slug": "beyaynetu",
       "name": "Beyaynetu",
       "description": "A colorful combination of vegetarian Ethiopian dishes served with injera.",
       "price": 300,
@@ -91,6 +96,7 @@
     },
     {
       "id": 6,
+      "slug": "misir-wat",
       "name": "Misir Wat",
       "description": "Spicy red lentil stew prepared with berbere and traditional spices.",
       "price": 220,
@@ -109,6 +115,7 @@
     },
     {
       "id": 7,
+      "slug": "gored-gored",
       "name": "Gored Gored",
       "description": "Cubed raw beef seasoned with Ethiopian spices and clarified butter.",
       "price": 500,
@@ -119,6 +126,7 @@
     },
     {
       "id": 8,
+      "slug": "fasting-firfir",
       "name": "Fasting Firfir",
       "description": "Pieces of injera mixed with spicy berbere sauce and vegetables.",
       "price": 200,
@@ -137,6 +145,7 @@
     },
     {
       "id": 9,
+      "slug": "chechebsa",
       "name": "Chechebsa",
       "description": "Shredded flatbread mixed with spiced butter and served as a traditional breakfast.",
       "price": 180,
@@ -153,6 +162,7 @@
     },
     {
       "id": 10,
+      "slug": "vegetable-couscous",
       "name": "Vegetable Couscous",
       "description": "Steamed couscous served with a mixture of fresh Ethiopian-style vegetables.",
       "price": 280,

@@ -41,7 +41,7 @@ export default function DishList({ dishes }) {
 
             <div className="mt-3 flex items-center gap-2">
               <Link
-                href={`/menu/${dish.id}`}
+                href={`/menu/${dish.slug}`}
                 className="flex-1 text-center text-sm border border-gray-300 rounded px-3 py-1.5 hover:bg-gray-50 transition"
               >
                 View details
