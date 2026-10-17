@@ -1,20 +1,24 @@
 import { NextResponse } from "next/server";
-import { decrypt } from "@/app/lib/jwt";
+import { SESSION_COOKIE, verifySessionToken } from "@/app/lib/session-token";
 
 export async function proxy(request) {
-  const token = request.cookies.get("session")?.value;
-  const session = await decrypt(token);
+  const token = request.cookies.get(SESSION_COOKIE)?.value;
+  const session = await verifySessionToken(token);
 
   if (!session) {
-    const { pathname, search } = request.nextUrl;
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", pathname + search);
-    return NextResponse.redirect(loginUrl);
+    const signInUrl = new URL("/signin", request.url);
+
+    signInUrl.searchParams.set(
+      "next",
+      request.nextUrl.pathname + request.nextUrl.search,
+    );
+
+    return NextResponse.redirect(signInUrl);
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/checkout/:path*"],
+  matcher: ["/checkout/:path*", "/orders/:path*"],
 };

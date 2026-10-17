@@ -1,28 +1,21 @@
+import "server-only";
+
 import { cookies } from "next/headers";
-import { decrypt, encypt } from "./jwt";
+import {
+  SESSION_COOKIE,
+  createSessionToken,
+  verifySessionToken,
+} from "./session-token";
 
-const MAX_AGE = 24 * 60 * 60 * 7;
-const COOKIE_NAME = "session";
+export { SESSION_COOKIE, verifySessionToken };
 
-export async function createSession(payload) {
-  const token = await encypt(payload);
-  const cookieStore = await cookies();
-
-  cookieStore.set(COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "lax",
-    maxAge: MAX_AGE,
-  });
+export async function createSession(user) {
+  return createSessionToken(user);
 }
 
 export async function getSession() {
   const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  return decrypt(token);
-}
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
 
-export async function deleteSession() {
-  const cookieStore = await cookies();
-  cookieStore.delete(COOKIE_NAME);
+  return verifySessionToken(token);
 }

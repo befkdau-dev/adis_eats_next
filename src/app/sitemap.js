@@ -1,32 +1,26 @@
-// app/sitemap.js
-import { getMenu } from "./lib/dishes";
+import { getMenu } from "@/app/lib/menu";
 
-const BASE_URL = "https://adis-eats-next.vercel.app/";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export default async function sitemap() {
-  const dishes = await getMenu();
+  const result = await getMenu();
+  const dishes = Array.isArray(result) ? result : (result.menu ?? []);
 
-  const staticRoutes = [
+  return [
     {
-      url: BASE_URL,
-      lastModified: new Date(),
+      url: siteUrl,
       changeFrequency: "weekly",
       priority: 1,
     },
     {
-      url: `${BASE_URL}/menu`,
-      lastModified: new Date(),
-      changeFrequency: "daily",
+      url: `${siteUrl}/menu`,
+      changeFrequency: "weekly",
       priority: 0.9,
     },
+    ...dishes.map((dish) => ({
+      url: `${siteUrl}/menu/${dish.slug}`,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    })),
   ];
-
-  const dishRoutes = dishes.map((dish) => ({
-    url: `${BASE_URL}/menu/${dish.id}`,
-    lastModified: new Date(),
-    changeFrequency: "weekly",
-    priority: 0.7,
-  }));
-
-  return [...staticRoutes, ...dishRoutes];
 }

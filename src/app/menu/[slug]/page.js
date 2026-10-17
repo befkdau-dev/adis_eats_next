@@ -1,53 +1,62 @@
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getDishBySlug, getMenu } from "@/app/lib/dishes";
-import AddToCartButton from "../AddToCartButton";
+import { getDishBySlug, getMenu } from "@/app/lib/menu";
+import { getDish } from "@/app/lib/menu";
 
-export async function generateStaticParams() {
-  const menu = await getMenu();
-  return menu.map((dish) => ({ slug: dish.slug }));
+export function generateStaticParams() {
+  return getMenu().map((dish) => ({
+    slug: dish.slug,
+  }));
 }
+
+export const dynamicParams = false;
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const dish = await getDishBySlug(slug);
-  if (!dish) return {};
+  const dish = await getDish(slug);
+
+  if (!dish) {
+    return { title: "Dish Not Found" };
+  }
+
+  const imageUrl = new URL(dish.image, siteUrl).toString();
 
   return {
     title: dish.name,
-    description: dish.description,
+    description: `${dish.description} Price: ${dish.price} ETB.`,
+
     openGraph: {
-      title: dish.name,
+      title: `${dish.name} — ${dish.price} ETB`,
       description: dish.description,
+      url: `/menu/${slug}`,
+      type: "website",
       images: [
         {
-          url: `/${dish.image}`,
-          width: 1200,
-          height: 630,
+          url: imageUrl,
           alt: dish.name,
         },
       ],
     },
+
     twitter: {
       card: "summary_large_image",
       title: dish.name,
       description: dish.description,
-      images: [`/${dish.image}`],
+      images: [imageUrl],
     },
   };
 }
 
-export default async function DishPage({ params }) {
-  const { slug } = await params;
-  const dish = await getDishBySlug(slug);
-
-  if (!dish) notFound();
-
+function DishJsonLd({ dish }) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "MenuItem",
     name: dish.name,
     description: dish.description,
+    image: new URL(dish.image, siteUrl).toString(),
+    url: new URL(`/menu/${dish.slug}`, siteUrl).toString(),
     offers: {
       "@type": "Offer",
       price: dish.price,
@@ -59,72 +68,95 @@ export default async function DishPage({ params }) {
   };
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+      }}
+    />
+  );
+}
+export default async function DishPage({ params }) {
+  const { slug } = await params;
+  const dish = getDishBySlug(slug);
 
-      <div className="grid gap-8 md:grid-cols-2 md:items-start">
-        {/* Image */}
-        <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 shadow-sm">
+  if (!dish) {
+    notFound();
+  }
+
+  return (
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <Link
+        href="/menu"
+        className="mb-6 inline-flex items-center gap-2 font-semibold text-[#bd7137] hover:text-[#193b2a]"
+      >
+        <span aria-hidden="true">←</span>
+        Back to menu
+      </Link>
+
+      <div className="grid items-start gap-8 md:grid-cols-2 md:gap-12">
+        <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#edf2e9]">
           <Image
-            src={`/${dish.image}`}
+            src={`/${dish.image.replace(/^\/+/, "")}`}
             alt={dish.name}
             fill
+            priority
             sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover"
-            priority
           />
-          <span className="absolute top-3 left-3 bg-white/90 backdrop-blur text-xs font-medium text-gray-700 px-2.5 py-1 rounded-full shadow-sm">
-            {dish.category}
-          </span>
-          {!dish.isAvailable && (
-            <span className="absolute top-3 right-3 bg-red-500 text-white text-xs font-medium px-2.5 py-1 rounded-full shadow-sm">
-              Unavailable
-            </span>
-          )}
         </div>
 
-        {/* Details */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{dish.name}</h1>
-          <p className="mt-2 text-gray-600 leading-relaxed">
-            {dish.description}
+        <div className="py-2">
+          <p className="text-sm font-semibold uppercase tracking-wider text-[#bd7137]">
+            {dish.category}
           </p>
 
-          <div className="mt-5 flex items-center gap-4">
-            <span className="text-2xl font-bold text-orange-600">
-              {dish.price} birr
-            </span>
-            {!dish.isAvailable && (
-              <span className="text-sm text-red-500 font-medium">
-                Currently unavailable
-              </span>
-            )}
-          </div>
+          <h1 className="mt-2 text-3xl font-bold text-[#193b2a] sm:text-4xl">
+            {dish.name}
+          </h1>
 
-          <div className="mt-6">
-            <AddToCartButton dish={dish} />
-          </div>
+          <p className="mt-5 leading-7 text-gray-600">{dish.description}</p>
 
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <h2 className="font-semibold text-sm uppercase tracking-wide text-gray-500 mb-3">
-              Ingredients
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {dish.ingredients.map((ingredient) => (
-                <span
-                  key={ingredient}
-                  className="text-sm bg-orange-50 text-orange-700 border border-orange-100 px-3 py-1 rounded-full"
-                >
-                  {ingredient}
-                </span>
-              ))}
-            </div>
-          </div>
+          <p className="mt-6 text-3xl font-bold text-[#193b2a]">
+            {dish.price.toLocaleString("en-US")} ETB
+          </p>
+
+          <p
+            className={`mt-4 inline-flex rounded-full px-3 py-1 text-sm font-medium ${
+              dish.isAvailable
+                ? "bg-[#edf2e9] text-[#193b2a]"
+                : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            {dish.isAvailable ? "Available to order" : "Currently unavailable"}
+          </p>
+
+          {dish.ingredients?.length > 0 && (
+            <section className="mt-8">
+              <h2 className="text-lg font-bold text-[#193b2a]">Ingredients</h2>
+
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {dish.ingredients.map((ingredient) => (
+                  <li
+                    key={ingredient}
+                    className="rounded-full border border-[#e9e7dc] bg-[#fffdf8] px-3 py-2 text-sm text-gray-700"
+                  >
+                    {ingredient}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <Link
+            href="/menu"
+            className="mt-8 inline-flex rounded-lg bg-[#193b2a] px-5 py-3 font-semibold text-white transition hover:bg-[#244b36]"
+          >
+            Explore more dishes
+          </Link>
         </div>
       </div>
-    </div>
+      <DishJsonLd dish={dish} />
+    </main>
   );
 }

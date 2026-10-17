@@ -22,5 +22,28 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-plus-jakarta), sans-serif;
+}
+.adis-map-marker-wrapper {
+  background: transparent;
+  border: 0;
+}
+
+.adis-map-marker {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 20%);
+  font-size: 22px;
+}
+
+.courier-marker {
+  background: #244b36;
+}
+
+.delivery-marker {
+  background: #bd7137;
 }

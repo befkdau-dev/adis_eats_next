@@ -1,58 +1,44 @@
 import { NextResponse } from "next/server";
-import { buildOrder } from "@/app/lib/orders";
-import { getSession } from "@/app/lib/session";
-import { promises as fs } from "fs";
-import { getOrdersByUser } from "@/app/lib/orderStore";
-import path from "path";
+import { validateOrder } from "@/app/lib/validate-order";
 
-export const dynamic = "force-dynamic";
-const ORDERS_FILE = path.join(
-  process.cwd(),
-  "src",
-  "app",
-  "data",
-  "orders.json",
-);
 export async function POST(request) {
   let body;
+
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    return NextResponse.json(
+      {
+        error: {
+          code: "INVALID_JSON",
+          message: "The request body must contain valid JSON.",
+        },
+      },
+      { status: 400 },
+    );
   }
 
-  const result = await buildOrder({
-    customer: body?.customer,
-    items: body?.items,
-  });
+  const result = validateOrder(body);
 
-  if (result.errors) {
-    return NextResponse.json({ errors: result.errors }, { status: 400 });
+  if (!result.success) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Please correct the submitted fields.",
+          fieldErrors: result.fieldErrors,
+        },
+      },
+      { status: 422 },
+    );
   }
 
-  return NextResponse.json({ order: result.order }, { status: 201 });
-}
-
-// export async function GET() {
-//   const session = await getSession();
-//   const userId = session.payload.userId;
-//   if (!session)
-//     return NextResponse.json({ error: "unahutorized" }, { status: 401 });
-//   let orders;
-//   try {
-//     orders = JSON.parse(await fs.readFile(ORDERS_FILE, "utf8"));
-//   } catch {}
-//   const userOrders = orders.filter((order) => order.usrId === userId);
-
-//   return NextResponse.json({ orders: userOrders });
-// }
-
-export async function GET() {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const userOrders = await getOrdersByUser(session.payload.userId);
-  return NextResponse.json({ orders: userOrders });
+  // This route validates the order but does not persist it.
+  return NextResponse.json(
+    {
+      message: "Order validated successfully.",
+      order: result.order,
+    },
+    { status: 200 },
+  );
 }

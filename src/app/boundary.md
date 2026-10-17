@@ -1,29 +1,35 @@
- <!-- Server Component
-app/layout.js	                                Static shell, exports metadata, no state. Renders Providers and NavLinks as client islands.
-app/page.js (home)	                            Reads getMenu() directly for featured dishes. No interactivity of its own.
-app/menu/page.js	                            Awaits searchParams and getMenu(), filters on the server, wraps the result in FilterShell via children.
+# Adis Eats — Server and Client Component Boundaries
 
-app/menu/[id]/page.js	                        Awaits params, calls getDish(id), calls notFound() for unknown dishes.
-app/menu/DishList.js	                        Pure presentation of the (already filtered) dishes. Renders Link and the client AddToCartButton.
-app/menu/DishListSkeleton.js	                Static placeholder markup for Suspense.
-app/menu/loading.js	                            Loading UI for the menu segment.
-app/menu/[id]/not-found.js / app/not-found.js	Static "not found" UI.
-app/checkout/page.js	                        Thin wrapper. Exports dynamic = "force-dynamic" (segment config can't be exported from a client file) and renders CheckoutForm.
-app/checkout/success/page.js	                Awaits searchParams and passes orderId down to a client component.
+| Component                                 | Runs on                     | Reason                                                                         |
+| ----------------------------------------- | --------------------------- | ------------------------------------------------------------------------------ |
+| `app/layout.js`                           | Server                      | Owns the HTML document, metadata, global styles, header and footer.            |
+| `app/providers.jsx`                       | Client                      | Provides the cart context to components that need client-side cart state.      |
+| `context/CartProvider.jsx`                | Client                      | Manages cart state and browser `localStorage`.                                 |
+| `app/page.js`                             | Server by default           | Renders the homepage and reads menu data on the server.                        |
+| `app/menu/layout.js`                      | Server                      | Owns the persistent menu sidebar and shared menu layout.                       |
+| `app/menu/page.js`                        | Server, async               | Loads menu data without client-side fetching hooks.                            |
+| `app/menu/CategoryBar.jsx`                | Client                      | Reserved for interactive category filtering; currently uses anchor navigation. |
+| `app/menu/FilterShell.jsx`                | Client                      | Demonstrates passing Server Component content through the `children` slot.     |
+| `app/menu/components/DishList.js`         | Server                      | Renders dish cards from server-provided data.                                  |
+| `app/menu/components/DishListSkeleton.js` | Server-compatible           | Renders a static loading placeholder.                                          |
+| `app/menu/[id]/page.js`                   | Server                      | Generates known dish routes and renders dish details.                          |
+| `app/cart/page.js`                        | Depends on implementation   | Can remain a Server Component if it only renders a client cart component.      |
+| `app/checkout/page.js`                    | Server, dynamic if required | Reads request-specific session data when checkout requires it.                 |
 
+## Data flow
 
-Client Components
-app/Providers.js	                            Composes the context providers (useState, useEffect inside them). Single client boundary for global state.
-context/CartContext.js	                        Cart state, persisted to localStorage (browser-only API).
-context/AuthContext.js	                        User + login-modal state, persisted to sessionStorage.
-context/OrdersContext.js                        Saved orders, persisted to localStorage.
-components/LoginModal.js	                    Modal open/close state, keyboard listener, form state.
-components/NavLinks.js	                        usePathname() for the active link, useAuth() for login/logout.
-CartBadge.js	                                Reads totalItems from cart context.
-menu/AddToCartButton.js	                        Click handler calling addItem from cart context.
-menu/FilterShell.js	                            useRouter and useSearchParams to drive ?category=.
-menu/error.js	                                Error boundaries must be Client Components.
-cart/page.js	                                Reads live cart state from context (quantity +/-, clear).
-checkout/CheckoutForm.js	                    Form state, auth and empty-cart guards, calls the Server Action.
-checkout/success/OrderConfirmation.js	        Reads the saved order from localStorage via context.
-orders/page.js	                                Reads order history from localStorage via context. -->
+1. The menu page loads data using the server-side menu helper.
+2. The server passes the resulting dish data to `DishList`.
+3. `FilterShell` receives the server-rendered subtree through `children`; it does not import `DishList`.
+4. `Providers` supplies cart context to components that consume it.
+5. Browser storage is accessed only on the client.
+
+## Bundle measurement
+
+Record the actual `/menu` First Load JS values from successful builds.
+
+- Before refactoring: [fill in the previous build measurement]
+- After refactoring: [fill in the new build measurement]
+- Difference: before minus after, in kB
+
+Do not estimate bundle sizes. Use the build output from the same Next.js version and compare equivalent production builds.

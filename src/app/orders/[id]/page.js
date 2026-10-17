@@ -1,11 +1,12 @@
-// app/orders/[id]/page.js
-import { getOrder } from "@/app/lib/orderStore";
-import OrderDetail from "./orderDetail";
-import { notFound } from "next/navigation";
+import OrderDetailClient from "./OrderDetailClient";
 
-export default async function OrderPage({ params }) {
+export const metadata = {
+  title: "Order Details",
+  description: "View your Adis Eats order details and status.",
+};
+
+export default async function OrderDetailPage({ params }) {
   const { id } = await params;
-  const order = await getOrder(id);
-  if (!order) notFound();
-  return <OrderDetail id={id} initialOrder={order} />;
+
+  return <OrderDetailClient orderId={id} />;
 }

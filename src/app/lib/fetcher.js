@@ -1,16 +1,30 @@
 export async function fetcher(url) {
-  const res = await fetch(url);
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json",
+    },
+  });
 
-  if (!res.ok) {
-    const error = new Error("error occuered while fetching the data");
-    error.status = res.status;
-    try {
-      error.info = await res.json();
-    } catch {
-      error.info = null;
-    }
+  let data;
+
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error("The server returned an invalid response.");
+  }
+
+  if (!response.ok) {
+    const error = new Error(
+      data?.error?.message ||
+        data?.message ||
+        `Request failed with status ${response.status}`,
+    );
+
+    error.status = response.status;
+    error.info = data;
+
     throw error;
   }
 
-  return res.json();
+  return data;
 }

@@ -1,40 +1,62 @@
-// app/api/dishes/route.js
-import { NextResponse } from "next/server";
-import { getMenu } from "@/app/lib/dishes";
-
-const PAGE_SIZE = 3;
+import { getMenu } from "@/app/lib/menu";
 
 export async function GET(request) {
-  const dishes = await getMenu();
-  const { searchParams } = new URL(request.url);
-  const category = searchParams.get("category");
-  const search = searchParams.get("search")?.trim().toLowerCase();
-  const page = Math.max(1, Number(searchParams.get("page")) || 1);
+  try {
+    const { searchParams } = new URL(request.url);
 
-  let results = dishes;
+    const query = (searchParams.get("q") || "").trim().toLowerCase();
 
-  if (category && category !== "All") {
-    results = results.filter((dish) => dish.category === category);
-  }
+    const requestedPage = Number(searchParams.get("page") || 1);
+    const requestedPageSize = Number(searchParams.get("limit") || 6);
 
-  if (search) {
-    results = results.filter(
-      (dish) =>
-        dish.name.toLowerCase().includes(search) ||
-        dish.description.toLowerCase().includes(search),
+    const page =
+      Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+
+    const pageSize =
+      Number.isInteger(requestedPageSize) && requestedPageSize > 0
+        ? Math.min(requestedPageSize, 24)
+        : 6;
+
+    const allDishes = getMenu();
+
+    const filteredDishes = allDishes.filter((dish) => {
+      const searchableText = [
+        dish.name,
+        dish.description,
+        dish.category,
+        ...(Array.isArray(dish.ingredients) ? dish.ingredients : []),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(query);
+    });
+
+    const total = filteredDishes.length;
+    const totalPages = Math.ceil(total / pageSize);
+    const start = (page - 1) * pageSize;
+
+    const dishes = filteredDishes.slice(start, start + pageSize);
+
+    return Response.json({
+      dishes,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages,
+      },
+    });
+  } catch {
+    return Response.json(
+      {
+        error: {
+          code: "DISH_FETCH_FAILED",
+          message: "Unable to load dishes.",
+        },
+      },
+      { status: 500 },
     );
   }
-
-  const total = results.length;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-  const start = (safePage - 1) * PAGE_SIZE;
-  const pageItems = results.slice(start, start + PAGE_SIZE);
-
-  return NextResponse.json({
-    dishes: pageItems,
-    page: safePage,
-    totalPages,
-    total,
-  });
 }

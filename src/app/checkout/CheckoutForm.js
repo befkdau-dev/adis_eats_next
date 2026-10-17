@@ -1,171 +1,214 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCart } from "@/app/context/CartContext";
-import { useAuth } from "@/app/context/AuthContext";
-import { useOrders } from "@/app/context/OrdersContext";
-import { validateCustomer } from "@/app/lib/validateOrder";
-import { placeOrder } from "@/app/lib/order-actions";
-import Link from "next/link";
+import { placeOrder } from "@/app/actions";
+import { useCart } from "@/app/context/CartProvider";
 
-const inputClass =
-  "w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-orange-500";
+const initialState = {
+  success: false,
+  message: "",
+  fieldErrors: {},
+};
 
 export default function CheckoutForm() {
-  const { items, totalPrice, clearCart, isLoaded: cartLoaded } = useCart();
-  const { user, isLoaded: authLoaded } = useAuth();
-  const { addOrderId } = useOrders();
+  const [state, formAction, pending] = useActionState(placeOrder, initialState);
+
+  const { cart, isLoaded, clearCart, totalPrice } = useCart();
+
   const router = useRouter();
-  const orderPlaced = useRef(false);
+  const savedOrderId = useRef(null);
+  const [storageError, setStorageError] = useState("");
 
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    address: "",
-    notes: "",
-  });
-  const [errors, setErrors] = useState({});
-  const [serverError, setServerError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  useEffect(() => {
+    if (!state.success || !state.order) return;
 
-  if (!user) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-600 mb-4">
-          Please log in to continue to checkout.
-        </p>
-        <Link
-          href="/login?next=/checkout"
-          className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 inline-block"
-        >
-          Log in
-        </Link>
-      </div>
-    );
-  }
+    const order = state.order;
 
-  // Key change: once an order has been placed, don't show "empty cart"
-  // even though clearCart() makes items.length briefly become 0.
-  if (items.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <h1 className="text-2xl font-bold mb-2">Your cart is empty</h1>
-        <p className="text-gray-600 mb-4">Add some dishes to get started.</p>
-        <Link
-          href="/menu"
-          className="text-orange-600 font-medium hover:underline"
-        >
-          Browse menu
-        </Link>
-      </div>
-    );
-  }
+    if (savedOrderId.current === order.id) return;
+    savedOrderId.current = order.id;
+    setStorageError("");
 
-  const handleChange = (e) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setServerError("");
-
-    const { errors: clientErrors, values } = validateCustomer(form);
-    setErrors(clientErrors);
-    if (Object.keys(clientErrors).length > 0) return;
-
-    setSubmitting(true);
     try {
-      const result = await placeOrder({
-        customer: values,
-        items: items.map((i) => ({ id: i.id, quantity: i.quantity })),
-      });
+      let ownerId = localStorage.getItem("adis-eats-owner");
 
-      if (result.errors) {
-        setErrors(result.errors);
-        setServerError(result.errors.items ?? "Please fix the errors above");
-        return;
+      if (!ownerId) {
+        ownerId = crypto.randomUUID();
+        localStorage.setItem("adis-eats-owner", ownerId);
       }
 
-      // Order succeeded: flip the ref FIRST, then navigate, then clear.
-      orderPlaced.current = true;
-      addOrderId(result.order.id);
-      router.push(`/checkout/success?orderId=${result.order.id}`);
+      const existing = JSON.parse(localStorage.getItem("orders") || "[]");
+
+      if (!Array.isArray(existing)) {
+        throw new Error("Invalid saved orders.");
+      }
+
+      const orderToSave = { ...order, ownerId };
+
+      localStorage.setItem(
+        "orders",
+        JSON.stringify([orderToSave, ...existing]),
+      );
+
       clearCart();
+
+      router.push(`/checkout/success?orderId=${encodeURIComponent(order.id)}`);
     } catch {
-      setServerError("Something went wrong. Please try again.");
-    } finally {
-      setSubmitting(false);
+      savedOrderId.current = null;
+      setStorageError(
+        "We couldn't save your order in this browser. Please check your browser storage and try again.",
+      );
     }
-  };
+  }, [state, clearCart, router]);
+
+  if (!isLoaded) {
+    return <p className="py-8">Loading your cart...</p>;
+  }
+
+  if (cart.length === 0 && !state.success) {
+    return (
+      <div className="rounded-xl border border-[#e9e7dc] p-6">
+        <p>Your cart is empty. Add dishes before checking out.</p>
+        <button
+          type="button"
+          onClick={() => router.push("/menu")}
+          className="mt-4 rounded-lg bg-[#193b2a] px-5 py-3 font-semibold text-white"
+        >
+          Browse menu
+        </button>
+      </div>
+    );
+  }
+
+  const errors = state.fieldErrors || {};
 
   return (
-    <div className="grid gap-8 md:grid-cols-2">
-      <form onSubmit={handleSubmit} noValidate className="space-y-4">
-        {[
-          { name: "name", label: "Full name", type: "text" },
-          { name: "phone", label: "Phone number", type: "tel" },
-          { name: "address", label: "Delivery address", type: "text" },
-        ].map((f) => (
-          <div key={f.name}>
-            <label className="block text-sm font-medium mb-1" htmlFor={f.name}>
-              {f.label}
-            </label>
-            <input
-              id={f.name}
-              name={f.name}
-              type={f.type}
-              value={form[f.name]}
-              onChange={handleChange}
-              className={inputClass}
-            />
-            {errors[f.name] && (
-              <p className="text-xs text-red-500 mt-1">{errors[f.name]}</p>
-            )}
-          </div>
+    <form action={formAction} className="space-y-5">
+      <div>
+        <label htmlFor="name" className="mb-1 block font-medium">
+          Full name
+        </label>
+        <input
+          id="name"
+          name="name"
+          required
+          minLength={2}
+          maxLength={100}
+          autoComplete="name"
+          className="w-full rounded-lg border border-gray-300 px-4 py-3"
+        />
+        {errors.name?.map((error) => (
+          <p key={error} className="mt-1 text-sm text-red-600">
+            {error}
+          </p>
         ))}
+      </div>
+      <div>
+        <label htmlFor="phone" className="mb-1 block font-medium">
+          Phone number
+        </label>
+        <input
+          id="phone"
+          name="phone"
+          type="tel"
+          required
+          placeholder="+251912345678"
+          autoComplete="tel"
+          className="w-full rounded-lg border border-gray-300 px-4 py-3"
+        />
+        {errors.phone?.map((error) => (
+          <p key={error} className="mt-1 text-sm text-red-600">
+            {error}
+          </p>
+        ))}
+      </div>
+      <div>
+        <label htmlFor="area" className="mb-1 block font-medium">
+          Delivery area
+        </label>
+        <input
+          id="area"
+          name="area"
+          required
+          maxLength={100}
+          placeholder="e.g. Bole"
+          autoComplete="address-level2"
+          className="w-full rounded-lg border border-gray-300 px-4 py-3"
+        />
+        {errors.area?.map((error) => (
+          <p key={error} className="mt-1 text-sm text-red-600">
+            {error}
+          </p>
+        ))}
+      </div>
+      <div>
+        <label htmlFor="notes" className="mb-1 block font-medium">
+          Delivery notes (optional)
+        </label>
+        <textarea
+          id="notes"
+          name="notes"
+          maxLength={500}
+          rows={3}
+          className="w-full rounded-lg border border-gray-300 px-4 py-3"
+        />
+        {errors.notes?.map((error) => (
+          <p key={error} className="mt-1 text-sm text-red-600">
+            {error}
+          </p>
+        ))}
+      </div>
+      <input
+        type="hidden"
+        name="items"
+        value={JSON.stringify(
+          cart.map(({ id, quantity }) => ({ id, quantity })),
+        )}
+      />
+      {errors.items?.map((error) => (
+        <p key={error} className="text-sm text-red-600">
+          {error}
+        </p>
+      ))}
+      {state.message && !state.success && (
+        <p role="alert" className="text-sm text-red-600">
+          {state.message}
+        </p>
+      )}
+      {storageError && (
+        <p role="alert" className="text-sm text-red-600">
+          {storageError}
+        </p>
+      )}
 
-        <div>
-          <label className="block text-sm font-medium mb-1" htmlFor="notes">
-            Notes (optional)
-          </label>
-          <textarea
-            id="notes"
-            name="notes"
-            rows={3}
-            value={form.notes}
-            onChange={handleChange}
-            className={inputClass}
-          />
-          {errors.notes && (
-            <p className="text-xs text-red-500 mt-1">{errors.notes}</p>
-          )}
+      <div className="rounded-xl bg-[#edf2e9] p-4 text-[#203b2d]">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Subtotal</span>
+          <span className="font-semibold">
+            {totalPrice.toLocaleString("en-US")} ETB
+          </span>
         </div>
 
-        {serverError && <p className="text-sm text-red-600">{serverError}</p>}
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-sm font-medium">Delivery</span>
+          <span className="font-semibold">Free</span>
+        </div>
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full bg-orange-600 text-white py-2 rounded hover:bg-orange-700 disabled:opacity-50"
-        >
-          {submitting ? "Placing order..." : `Place order · ${totalPrice} birr`}
-        </button>
-      </form>
-
-      <div className="border border-gray-200 rounded-lg p-4 h-fit">
-        <h2 className="font-semibold mb-3">Order summary</h2>
-        <ul className="space-y-1 text-sm">
-          {items.map((item) => (
-            <li key={item.id} className="flex justify-between">
-              <span>
-                {item.name} × {item.quantity}
-              </span>
-              <span>{item.price * item.quantity} birr</span>
-            </li>
-          ))}
-        </ul>
-        <p className="font-bold mt-3 border-t pt-3">Total: {totalPrice} birr</p>
+        <div className="mt-3 flex items-center justify-between border-t border-[#d5dfd0] pt-3 font-bold">
+          <span>Total</span>
+          <span className="text-[#193b2a]">
+            {totalPrice.toLocaleString("en-US")} ETB
+          </span>
+        </div>
       </div>
-    </div>
+
+      <button
+        type="submit"
+        disabled={pending || cart.length === 0}
+        className="w-full rounded-lg bg-[#193b2a] px-5 py-3 font-semibold text-white hover:bg-[#244b36] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {pending ? "Placing order..." : "Place order"}
+      </button>
+    </form>
   );
 }

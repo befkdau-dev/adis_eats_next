@@ -1,38 +1,39 @@
-// app/menu/page.js
 import { Suspense } from "react";
-import { getMenu } from "../lib/dishes";
-import DishListSkeleton from "./DishListSkeleton";
-import DishList from "./DishList";
+import { getMenu } from "@/app/lib/menu";
+import SearchBox from "./SearchBox";
+import DishList from "./components/DishList";
+import CategoryBar from "./components/CategoryBar";
 import FilterShell from "./FilterShell";
-import MenuPager from "./MenuPager";
+import DishListSkeleton from "./components/DishListSkeleton";
 
-const PAGE_SIZE = 3;
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
+
 export const metadata = {
-  title: "Menu",
-  description: "Adiss Eats Menus",
+  title: "Ethiopian Food, Delivered",
+  description:
+    "Explore Ethiopian dishes and discover your next favorite meal with Adis Eats.",
 };
-
-export default async function MenuPage({ searchParams }) {
-  const { category, page: pageParam } = await searchParams;
+export default async function MenuPage() {
   const dishes = await getMenu();
 
-  const filtered =
-    category && category !== "All"
-      ? dishes.filter((d) => d.category === category)
-      : dishes;
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const page = Math.min(Math.max(1, Number(pageParam) || 1), totalPages);
-  const start = (page - 1) * PAGE_SIZE;
-  const pageItems = filtered.slice(start, start + PAGE_SIZE);
-
   return (
-    <Suspense fallback={<DishListSkeleton />}>
+    <div>
+      <CategoryBar />
+
       <FilterShell>
-        <DishList dishes={pageItems} />
-        {totalPages > 1 && <MenuPager page={page} totalPages={totalPages} />}
+        <Suspense fallback={<DishListSkeleton />}>
+          <Suspense
+            fallback={
+              <div className="mx-auto max-w-7xl px-4 py-8 text-sm text-gray-500">
+                Loading search...
+              </div>
+            }
+          >
+            <SearchBox />
+          </Suspense>
+          <DishList dishes={dishes} />
+        </Suspense>
       </FilterShell>
-    </Suspense>
+    </div>
   );
 }
